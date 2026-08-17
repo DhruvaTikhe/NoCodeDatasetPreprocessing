@@ -1,0 +1,58 @@
+<mxfile host="Electron">
+  <diagram name="Page-1" id="280BEO4TFQaiIS9LRxVX">
+    <mxGraphModel dx="1178" dy="741" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-35" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="440" width="700" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-22" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;curved=0;" target="wUSt41dkaRDHkGGK1UYc-3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#008a00;fontColor=#ffffff;strokeColor=#005700;fontStyle=1" value="Raw Dataset" vertex="1">
+          <mxGeometry height="40" width="240" x="20" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-26" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="wUSt41dkaRDHkGGK1UYc-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-3" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#001DBC;fillColor=#0050ef;align=center;verticalAlign=middle;rounded=0;fontColor=light-dark(#FFFFFF,#000000);fontStyle=1" value="&lt;span style=&quot;background-color: transparent;&quot;&gt;Nan/NA/Null&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Duplicate Records&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Useless Columns&lt;/span&gt;&lt;br&gt;&lt;span style=&quot;background-color: transparent;&quot;&gt;Case and spacing noises&lt;/span&gt;" vertex="1">
+          <mxGeometry height="80" width="240" x="20" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-27" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="wUSt41dkaRDHkGGK1UYc-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-5" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#001DBC;fillColor=#0050ef;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;fontStyle=1" value="Data Types&lt;div&gt;Data Entries&lt;/div&gt;&lt;div&gt;Invalid Data&lt;/div&gt;&lt;div&gt;Mixed Formatting&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="240" x="20" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-31" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="wUSt41dkaRDHkGGK1UYc-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-7" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#001DBC;fillColor=#0050ef;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;fontStyle=1" value="Categorical Relationships (encode)&lt;div&gt;Correlation Analysis(PCC)&lt;/div&gt;&lt;div&gt;Outliers&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="240" x="20" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-29" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="wUSt41dkaRDHkGGK1UYc-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#001DBC;fillColor=#0050ef;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;fontStyle=1" value="Scaling&lt;div&gt;Normalizing&lt;/div&gt;&lt;div&gt;Class Imbalance&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="240" x="440" y="20" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-30" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="wUSt41dkaRDHkGGK1UYc-17">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-9" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#001DBC;fillColor=#0050ef;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;fontStyle=1" value="Feature Engineering&lt;div&gt;Feature Selection&lt;/div&gt;&lt;div&gt;Correlation Analysis (PCC)&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="240" x="440" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-10" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#3700CC;fillColor=#6a00ff;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;fontStyle=1" value="Sample Linear Model&lt;div&gt;Sample Bayesian Model&lt;/div&gt;&lt;div&gt;Sample KNN Model&lt;/div&gt;" vertex="1">
+          <mxGeometry height="80" width="240" x="440" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-33" edge="1" parent="1" source="wUSt41dkaRDHkGGK1UYc-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="wUSt41dkaRDHkGGK1UYc-10">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="wUSt41dkaRDHkGGK1UYc-17" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=#005700;fillColor=#008a00;align=center;verticalAlign=middle;rounded=0;fontColor=#ffffff;fontStyle=1" value="Clean Dataset&lt;div&gt;Train Test Validation Split&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="240" x="440" y="260" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
