@@ -1,9 +1,12 @@
 import streamlit as st
 from preprocessing.registry import MODULES
+from analysis.registry import MODULES as ANALYSIS_MODULES
 from utils.loader import *
 from utils.session import *
 from utils.profiler import *
 from utils.exporter import *
+import matplotlib.pyplot as plt
+import seaborn as sns
 # -----------------------------------------------------------------------------
 # Page Configuration
 # -----------------------------------------------------------------------------
@@ -33,7 +36,7 @@ st.divider()
 # Main Layout
 # -----------------------------------------------------------------------------
 
-left_col, right_col = st.columns([7, 3], gap="large")
+left_col, right_col = st.columns([6, 4], gap="large")
 
 # =============================================================================
 # LEFT PANEL
@@ -84,28 +87,8 @@ with left_col:
     # -------------------------------------------------------------------------
     # Preprocessing Modules
     # -------------------------------------------------------------------------
-
-    modules = [
-        "Missing Values",
-        "Duplicates",
-        # "Incorrect Data Types",
-        # "Inconsistent Entries",
-        # "Outliers",
-        # "Invalid Data",
-        # "High Correlation",
-        # "Redundant Columns",
-        # "Class Imbalance",
-        # "Mixed Formatting",
-        # "Case & Spacing",
-        # "Encoding",
-        # "Scaling",
-        # "Normalization",
-        # "Feature Selection"
-    ]
-    
     if has_dataframe():
         df = get_dataframe()
-
         for module in MODULES:
             with st.expander(module.TITLE):
                 columns = df.columns.tolist()
@@ -117,8 +100,8 @@ with left_col:
 
                 else:
                     columns = df.columns.tolist()
-                # st.markdown(module.METHODS)
-                # st.markdown(columns)
+                # st.markdown(module.METHODS) #debug
+                # st.markdown(columns) #debug
 
                 if module.ALLOW_MULTISELECT:
                     selected_columns = st.multiselect(
@@ -164,36 +147,206 @@ with right_col:
     # AI Summary
     # -------------------------------------------------------------------------
 
-    st.write("")
+    # st.write("")
 
-    with st.container(border=True):
-        st.write("AI Summary")
+    # with st.container(border=True):
+    #     st.write("AI Summary")
 
-    st.write("")
+    # st.write("")
 
     # -------------------------------------------------------------------------
     # Dataset Summary
     # -------------------------------------------------------------------------
 
-    with st.container(border=True):
+    # with st.expander("📋 Dataset Summary", expanded=True):
+    #     # st.subheader("📊 Dataset Summary")
+    #     if has_dataframe():
+    #         summary = dataset_summary(get_dataframe())
+    #         st.dataframe(
+    #             summary,
+    #             use_container_width=True,
+    #             hide_index=False
+    #         )
+    #     else:
+    #         st.info("No dataset uploaded")
+    # st.write("")
 
-        st.subheader("📊 Dataset Summary")
+
+    # -------------------------------------------------------------------------
+    # Dataset Information
+    # -------------------------------------------------------------------------
+    with st.expander("📋 Dataset Information", expanded=True):
+        # with st.container(border=True):
+        # st.subheader("📋 Dataset Information")
+
         if has_dataframe():
-            summary = dataset_summary(get_dataframe())
-            st.table(summary)
+
+            df = get_dataframe()
+
+            info_data = pd.DataFrame({
+                "Column": df.columns,
+                "Non-Null Count": df.notna().sum().values,
+                "Null Count": df.isna().sum().values,
+                "Dtype": df.dtypes.astype(str).values
+            })
+
+            # st.table(info_data)
+            st.dataframe(
+                info_data,
+                use_container_width=True,
+                hide_index=True
+            )
+
+            st.caption(
+                f"{df.shape[0]:,} rows x {df.shape[1]:,} columns\n\n{dataset_summary(get_dataframe())['Missing Values']} Missing Values & {dataset_summary(get_dataframe())['Duplicate Rows']} Duplicate Rows"
+            )
+
         else:
+
             st.info("No dataset uploaded")
-    st.write("")
+
+    # -------------------------------------------------------------------------
+    # Correlation Analysis
+    # -------------------------------------------------------------------------
+
+    with st.expander("📋 Correlation Analysis", expanded=True):
+        if has_dataframe():
+
+            # with st.container(border=True):
+
+                # st.subheader("📈 Analysis")
+
+                for module in ANALYSIS_MODULES:
+
+                    # with st.expander(module.TITLE):
+
+                        method = st.selectbox(
+                            "Technique",
+                            module.METHODS,
+                            key=f"{module.TITLE}_analysis_method"
+                        )
+
+                        threshold = st.slider(
+                            "Correlation Threshold",
+                            min_value=0.50,
+                            max_value=1.00,
+                            value=0.80,
+                            step=0.05,
+                            key=f"{module.TITLE}_threshold"
+                        )
+
+                        if st.button(
+                            "Analyze",
+                            key=f"{module.TITLE}_analyze"
+                        ):
+
+                            matrix, highly_correlated, log = module.analyze(
+                                get_dataframe(),
+                                method=method,
+                                threshold=threshold
+                            )
+
+                            st.session_state.correlation_matrix = matrix
+                            st.session_state.highly_correlated = (
+                                highly_correlated
+                            )
+                            st.session_state.correlation_method = method
+
+                            st.session_state.logs.append(log)
+
+                            st.rerun()
+
+                # -------------------------------------------------------------
+                # Display saved correlation results
+                # -------------------------------------------------------------
+
+                if "correlation_matrix" in st.session_state:
+
+                    matrix = st.session_state.correlation_matrix
+
+                    if not matrix.empty:
+
+                        st.subheader(
+                            f"{st.session_state.correlation_method} "
+                            "Correlation Heatmap"
+                        )
+
+                        fig, ax = plt.subplots(
+                            figsize=(10, 7)
+                        )
+
+                        sns.heatmap(
+                            matrix,
+                            annot=True,
+                            fmt=".2f",
+                            center=0,
+                            vmin=-1,
+                            vmax=1,
+                            ax=ax
+                        )
+
+                        ax.set_title(
+                            f"{st.session_state.correlation_method} "
+                            "Correlation Matrix"
+                        )
+
+                        st.pyplot(
+                            fig,
+                            use_container_width=True
+                        )
+
+                        plt.close(fig)
+
+                        st.subheader(
+                            "Highly Correlated Features"
+                        )
+
+                        highly_correlated = (
+                            st.session_state.highly_correlated
+                        )
+
+                        if highly_correlated.empty:
+
+                            st.info(
+                                "No highly correlated feature pairs found."
+                            )
+
+                        else:
+
+                            st.dataframe(
+                                highly_correlated,
+                                use_container_width=True,
+                                hide_index=True
+                            )
+
+                    else:
+
+                        st.warning(
+                            "At least two numerical columns are "
+                            "required for correlation analysis."
+                        )
+
+        else:
+
+            with st.container(border=True):
+
+                st.subheader("📈 Analysis")
+
+                st.info(
+                    "Upload a dataset to use analysis tools."
+                )
+
+        st.write("")
 
     # -------------------------------------------------------------------------
     # Logs & History
     # -------------------------------------------------------------------------
 
-    with st.container(border=True):
+    # with st.container(border=True):
 
-        st.subheader("📝 Logs & History")
+    #     st.subheader("📝 Logs & History")
 
-        st.info("THIS IS PLACEHOLDER")
+    #     st.info("THIS IS PLACEHOLDER")
 
 # -----------------------------------------------------------------------------
 # Footer
@@ -212,7 +365,7 @@ if has_dataframe():
 
     filename = st.session_state.uploaded_filename
 
-    col1, col2, col3= st.columns([2,2,6])
+    col1, col2, col3= st.columns([1,1,8])
 
     with col1:
         st.download_button(
