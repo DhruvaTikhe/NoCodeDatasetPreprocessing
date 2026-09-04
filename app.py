@@ -14,7 +14,7 @@ import seaborn as sns
 st.set_page_config(
     page_title="NoCodePrep",
     page_icon="🧹",
-    layout="wide"
+    layout='wide'
 )
 initialize_session()
 # -----------------------------------------------------------------------------
@@ -36,7 +36,7 @@ st.divider()
 # Main Layout
 # -----------------------------------------------------------------------------
 
-left_col, right_col = st.columns([6, 4], gap="large")
+left_col, right_col = st.columns([6, 4], gap='medium')
 
 # =============================================================================
 # LEFT PANEL
@@ -72,6 +72,7 @@ with left_col:
     # Dataset Preview
     # -------------------------------------------------------------------------
 
+    #UNCOMMENT FOR DATASET PREVIEW ORIGINAL
     with st.expander("📋 Dataset Preview", expanded=True):
         if has_dataframe():
             st.dataframe(
@@ -164,179 +165,248 @@ with right_col:
     #         summary = dataset_summary(get_dataframe())
     #         st.dataframe(
     #             summary,
-    #             use_container_width=True,
+    #             width='stretch',
+
     #             hide_index=False
     #         )
     #     else:
     #         st.info("No dataset uploaded")
     # st.write("")
 
+# -------------------------------------------------------------------------
+# Analysis
+# -------------------------------------------------------------------------
 
-    # -------------------------------------------------------------------------
-    # Dataset Information
-    # -------------------------------------------------------------------------
-    with st.expander("📋 Dataset Information", expanded=True):
-        # with st.container(border=True):
-        # st.subheader("📋 Dataset Information")
+    with st.expander("📊 Analysis", expanded=False):
 
         if has_dataframe():
 
             df = get_dataframe()
 
-            info_data = pd.DataFrame({
-                "Column": df.columns,
-                "Non-Null Count": df.notna().sum().values,
-                "Null Count": df.isna().sum().values,
-                "Dtype": df.dtypes.astype(str).values
-            })
+            for module in ANALYSIS_MODULES:
 
-            # st.table(info_data)
-            st.dataframe(
-                info_data,
-                use_container_width=True,
-                hide_index=True
-            )
-
-            st.caption(
-                f"{df.shape[0]:,} rows x {df.shape[1]:,} columns\n\n{dataset_summary(get_dataframe())['Missing Values']} Missing Values & {dataset_summary(get_dataframe())['Duplicate Rows']} Duplicate Rows"
-            )
-
-        else:
-
-            st.info("No dataset uploaded")
-
-    # -------------------------------------------------------------------------
-    # Correlation Analysis
-    # -------------------------------------------------------------------------
-
-    with st.expander("📋 Correlation Analysis", expanded=True):
-        if has_dataframe():
-
-            # with st.container(border=True):
-
-                # st.subheader("📈 Analysis")
-
-                for module in ANALYSIS_MODULES:
-
-                    # with st.expander(module.TITLE):
-
-                        method = st.selectbox(
-                            "Technique",
-                            module.METHODS,
-                            key=f"{module.TITLE}_analysis_method"
-                        )
-
-                        threshold = st.slider(
-                            "Correlation Threshold",
-                            min_value=0.50,
-                            max_value=1.00,
-                            value=0.80,
-                            step=0.05,
-                            key=f"{module.TITLE}_threshold"
-                        )
-
-                        if st.button(
-                            "Analyze",
-                            key=f"{module.TITLE}_analyze"
-                        ):
-
-                            matrix, highly_correlated, log = module.analyze(
-                                get_dataframe(),
-                                method=method,
-                                threshold=threshold
-                            )
-
-                            st.session_state.correlation_matrix = matrix
-                            st.session_state.highly_correlated = (
-                                highly_correlated
-                            )
-                            st.session_state.correlation_method = method
-
-                            st.session_state.logs.append(log)
-
-                            st.rerun()
+                st.markdown(f"### {module.TITLE}")
 
                 # -------------------------------------------------------------
-                # Display saved correlation results
+                # Select columns
                 # -------------------------------------------------------------
 
-                if "correlation_matrix" in st.session_state:
+                columns = df.columns.tolist()
 
-                    matrix = st.session_state.correlation_matrix
+                if module.COLUMN_TYPE == "numeric":
 
-                    if not matrix.empty:
+                    columns = (
+                        df.select_dtypes(include="number")
+                        .columns
+                        .tolist()
+                    )
 
-                        st.subheader(
-                            f"{st.session_state.correlation_method} "
-                            "Correlation Heatmap"
+                elif module.COLUMN_TYPE == "categorical":
+
+                    columns = (
+                        df.select_dtypes(exclude="number")
+                        .columns
+                        .tolist()
+                    )
+
+                # -------------------------------------------------------------
+                # DESCRIPTION
+                # -------------------------------------------------------------
+
+                if module.TITLE == "Describe":
+
+                    selected_columns = st.multiselect(
+                        "Columns",
+                        columns,
+                        key=f"{module.TITLE}_columns"
+                    )
+
+                    if st.button(
+                        "Analyze",
+                        key=f"{module.TITLE}_analyze"
+                    ):
+
+                        result = module.analyze(
+                            df,
+                            selected_columns
                         )
 
-                        fig, ax = plt.subplots(
-                            figsize=(10, 7)
+                        st.session_state.describe_result = result
+
+                        st.rerun()
+
+                    if "describe_result" in st.session_state:
+
+                        st.dataframe(
+                            st.session_state.describe_result,
+                            width="stretch"
                         )
 
-                        sns.heatmap(
-                            matrix,
-                            annot=True,
-                            fmt=".2f",
-                            center=0,
-                            vmin=-1,
-                            vmax=1,
-                            ax=ax
+                # -------------------------------------------------------------
+                # VALUE COUNTS
+                # -------------------------------------------------------------
+
+                elif module.TITLE == "Value Counts":
+
+                    selected_columns = st.multiselect(
+                        "Columns",
+                        columns,
+                        key=f"{module.TITLE}_columns"
+                    )
+
+                    if st.button(
+                        "Analyze",
+                        key=f"{module.TITLE}_analyze"
+                    ):
+
+                        result = module.analyze(
+                            df,
+                            selected_columns
                         )
 
-                        ax.set_title(
-                            f"{st.session_state.correlation_method} "
-                            "Correlation Matrix"
+                        st.session_state.value_counts_result = result
+
+                        st.rerun()
+
+                    if "value_counts_result" in st.session_state:
+
+                        results = (
+                            st.session_state.value_counts_result
                         )
 
-                        st.pyplot(
-                            fig,
-                            use_container_width=True
-                        )
+                        for column, counts in results.items():
 
-                        plt.close(fig)
-
-                        st.subheader(
-                            "Highly Correlated Features"
-                        )
-
-                        highly_correlated = (
-                            st.session_state.highly_correlated
-                        )
-
-                        if highly_correlated.empty:
-
-                            st.info(
-                                "No highly correlated feature pairs found."
+                            st.markdown(
+                                f"**{column}**"
                             )
-
-                        else:
 
                             st.dataframe(
-                                highly_correlated,
-                                use_container_width=True,
+                                counts,
+                                width="stretch",
                                 hide_index=True
                             )
 
-                    else:
+                # -------------------------------------------------------------
+                # CORRELATION
+                # -------------------------------------------------------------
 
-                        st.warning(
-                            "At least two numerical columns are "
-                            "required for correlation analysis."
+                elif module.TITLE == "High Correlation":
+
+                    method = st.selectbox(
+                        "Technique",
+                        module.METHODS,
+                        key=f"{module.TITLE}_analysis_method"
+                    )
+
+                    threshold = st.slider(
+                        "Correlation Threshold",
+                        min_value=0.50,
+                        max_value=1.00,
+                        value=0.80,
+                        step=0.05,
+                        key=f"{module.TITLE}_threshold"
+                    )
+
+                    if st.button(
+                        "Analyze",
+                        key=f"{module.TITLE}_analyze"
+                    ):
+
+                        matrix, highly_correlated, log = module.analyze(
+                            df,
+                            method=method,
+                            threshold=threshold
                         )
+
+                        st.session_state.correlation_matrix = matrix
+
+                        st.session_state.highly_correlated = (
+                            highly_correlated
+                        )
+
+                        st.session_state.correlation_method = method
+
+                        st.session_state.logs.append(log)
+
+                        st.rerun()
+
+                    # ---------------------------------------------------------
+                    # Display correlation results
+                    # ---------------------------------------------------------
+
+                    if "correlation_matrix" in st.session_state:
+
+                        matrix = (
+                            st.session_state.correlation_matrix
+                        )
+
+                        if not matrix.empty:
+
+                            st.subheader(
+                                f"{st.session_state.correlation_method} "
+                                "Correlation Heatmap"
+                            )
+
+                            fig, ax = plt.subplots(
+                                figsize=(10, 7)
+                            )
+
+                            sns.heatmap(
+                                matrix,
+                                annot=True,
+                                fmt=".2f",
+                                center=0,
+                                vmin=-1,
+                                vmax=1,
+                                ax=ax
+                            )
+
+                            ax.set_title(
+                                f"{st.session_state.correlation_method} "
+                                "Correlation Matrix"
+                            )
+
+                            st.pyplot(
+                                fig,
+                                width="stretch"
+                            )
+
+                            plt.close(fig)
+
+                            st.subheader(
+                                "Highly Correlated Features"
+                            )
+
+                            highly_correlated = (
+                                st.session_state.highly_correlated
+                            )
+
+                            if highly_correlated.empty:
+
+                                st.info(
+                                    "No highly correlated feature pairs found."
+                                )
+
+                            else:
+
+                                st.dataframe(
+                                    highly_correlated,
+                                    width="stretch",
+                                    hide_index=True
+                                )
+
+                        else:
+
+                            st.warning(
+                                "At least two numerical columns are "
+                                "required for correlation analysis."
+                            )
 
         else:
 
-            with st.container(border=True):
-
-                st.subheader("📈 Analysis")
-
-                st.info(
-                    "Upload a dataset to use analysis tools."
-                )
-
-        st.write("")
+            st.info(
+                "Upload a dataset to use analysis tools."
+            )
 
     # -------------------------------------------------------------------------
     # Logs & History
