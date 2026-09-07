@@ -408,6 +408,36 @@ with right_col:
                 "Upload a dataset to use analysis tools."
             )
 
+            
+    with st.expander("📋 Dataset Information", expanded=True):
+        # with st.container(border=True):
+        # st.subheader("📋 Dataset Information")
+
+        if has_dataframe():
+
+            df = get_dataframe()
+
+            info_data = pd.DataFrame({
+                "Column": df.columns,
+                "Non-Null Count": df.notna().sum().values,
+                "Null Count": df.isna().sum().values,
+                "Dtype": df.dtypes.astype(str).values
+            })
+
+            # st.table(info_data)
+            st.dataframe(
+                info_data,
+                width='stretch',
+                hide_index=True
+            )
+
+            st.caption(
+                f"{df.shape[0]:,} rows x {df.shape[1]:,} columns\n\n{dataset_summary(get_dataframe())['Missing Values']} Missing Values & {dataset_summary(get_dataframe())['Duplicate Rows']} Duplicate Rows"
+            )
+
+        else:
+
+            st.info("No dataset uploaded")
     # -------------------------------------------------------------------------
     # Logs & History
     # -------------------------------------------------------------------------
