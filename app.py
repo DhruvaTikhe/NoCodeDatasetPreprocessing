@@ -1,12 +1,18 @@
 import streamlit as st
-from preprocessing.registry import MODULES
-from analysis.registry import MODULES as ANALYSIS_MODULES
+
+from preprocessing.registry import MODULES as MODULES
+from analysis.registry import ANALYSIS_MODULES as ANALYSIS_MODULES
+
 from utils.loader import *
 from utils.session import *
 from utils.profiler import *
 from utils.exporter import *
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+#scalability imports
+from utils.dataset_manager import *
+from utils.scalable_loader import *
 # -----------------------------------------------------------------------------
 # Page Configuration
 # -----------------------------------------------------------------------------
@@ -51,21 +57,32 @@ with left_col:
     st.subheader("📂 Upload Dataset")
 
     uploaded_file = st.file_uploader(
-    "Choose a CSV or Excel file",
-    type=["csv", "xlsx"]
+        "Choose a CSV or Excel file",
+        type=["csv", "xlsx"]
     )
 
-    if uploaded_file is not None:
+    if uploaded_file:
 
-    # Load only if this is a new upload
-        if (
-            st.session_state.df is None
-            or st.session_state.uploaded_filename != uploaded_file.name
-        ):
-            df = load_dataset(uploaded_file)
-            set_dataframe(df, uploaded_file.name)
+        engine = dataset_manager.get_engine(uploaded_file.size)
+
+        if engine == "pandas":
+
+            df = loader.load_dataset(uploaded_file)
+
+            st.session_state.df = df
+            st.session_state.dataset_engine = "pandas"
+            st.session_state.dataset_path = None
+
+        else:
+
+            file_path = scalable_loader.save(uploaded_file)
+
+            st.session_state.df = None
+            st.session_state.dataset_engine = "duckdb"
+            st.session_state.dataset_path = file_path
 
         st.success(f"Loaded {uploaded_file.name}")
+
     st.divider()
 
     # -------------------------------------------------------------------------
@@ -74,16 +91,35 @@ with left_col:
 
     #UNCOMMENT FOR DATASET PREVIEW ORIGINAL
     with st.expander("📋 Dataset Preview", expanded=True):
+
         if has_dataframe():
+
             st.dataframe(
                 get_dataframe().head(10),
-                width='stretch',
+                width="stretch",
                 hide_index=True
             )
+
+        elif st.session_state.get("dataset_engine") == "duckdb":
+
+            con = scalable_loader.connect()
+
+            preview_df = scalable_loader.preview(
+                con,
+                st.session_state.dataset_path,
+                10
+            )
+
+            st.dataframe(
+                preview_df,
+                width="stretch",
+                hide_index=True
+            )
+
+            con.close()
+
         else:
             st.info("Upload a dataset to preview it.")
-
-    st.divider()
 
     # -------------------------------------------------------------------------
     # Preprocessing Modules
@@ -435,6 +471,30 @@ with right_col:
                 f"{df.shape[0]:,} rows x {df.shape[1]:,} columns\n\n{dataset_summary(get_dataframe())['Missing Values']} Missing Values & {dataset_summary(get_dataframe())['Duplicate Rows']} Duplicate Rows"
             )
 
+        elif st.session_state.get("dataset_engine") == "duckdb":
+
+            con = scalable_loader.connect()
+
+            schema, row_count = scalable_loader.dataset_info(
+                con,
+                st.session_state.dataset_path
+            )
+
+            info_data = schema[["column_name", "column_type"]].copy()
+
+            info_data.columns = ["Column", "Dtype"]
+
+            st.dataframe(
+                info_data,
+                width="stretch",
+                hide_index=True
+            )
+
+            st.caption(
+                f"{row_count:,} rows × {len(info_data):,} columns"
+            )
+
+            con.close()
         else:
 
             st.info("No dataset uploaded")

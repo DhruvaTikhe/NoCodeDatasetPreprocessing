@@ -5,6 +5,9 @@ import pandas as pd
 
 TITLE = "High Correlation"
 
+COLUMN_TYPE = "numeric"
+
+
 METHODS = [
     "Pearson",
     "Spearman",

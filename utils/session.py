@@ -21,11 +21,6 @@ def set_dataframe(df, filename=None):
     if filename is not None:
         st.session_state.uploaded_filename = filename
 
-#OLD
-# def set_dataframe(df, filename):
-#     st.session_state.df = df
-#     st.session_state.uploaded_filename = filename
-
 
 def get_dataframe():
     return st.session_state.df

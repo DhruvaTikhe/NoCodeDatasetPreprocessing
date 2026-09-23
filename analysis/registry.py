@@ -1,7 +1,11 @@
 from . import (
     correlation,
+    describe,
+    value_counts,
 )
 
-MODULES = [
-    correlation
+ANALYSIS_MODULES = [
+    correlation,
+    describe,
+    value_counts,
 ]

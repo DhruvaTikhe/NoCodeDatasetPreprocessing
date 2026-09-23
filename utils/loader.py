@@ -2,7 +2,7 @@
 import pandas as pd
 
 
-SUPPORTED_TYPES = ["csv", "xlsx"]
+SUPPORTED_TYPES = ["csv"]
 
 
 def load_dataset(uploaded_file):
@@ -15,7 +15,7 @@ def load_dataset(uploaded_file):
     if extension == "csv":
         return pd.read_csv(uploaded_file)
 
-    if extension == "xlsx":
-        return pd.read_excel(uploaded_file)
+    # if extension == "xlsx":
+    #     return pd.read_excel(uploaded_file)
 
     raise ValueError(f"Unsupported file type: {extension}")
