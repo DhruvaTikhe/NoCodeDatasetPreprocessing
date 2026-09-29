@@ -6,7 +6,7 @@ METHODS = [
     "Lowercase",
     "Uppercase",
     "Title Case",
-    "Capitalize",
+    # "Capitalize",
 ]
 
 SHOW_CONSTANT = False

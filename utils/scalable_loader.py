@@ -6,68 +6,36 @@ def connect():
     return duckdb.connect()
 
 
+def get_source(file_path):
+    if file_path.lower().endswith(".parquet"):
+        return f"read_parquet('{file_path}')"
+
+    elif file_path.lower().endswith(".csv"):
+        return f"read_csv_auto('{file_path}')"
+
+    else:
+        raise ValueError(f"Unsupported file type: {file_path}")
+
+    
 def preview(con, path, rows=10):
+    source = get_source(path)
     return con.execute(f"""
         SELECT *
-        FROM read_csv_auto('{path}')
+        FROM {source}
         LIMIT {rows}
     """).df()
 
 
-def dataset_info(con, path):
 
-    # Get schema
-    schema = con.execute(f"""
+
+def describe(con, path):
+    source = get_source(path)
+
+    return con.execute(f"""
         DESCRIBE
         SELECT *
-        FROM read_csv_auto('{path}')
+        FROM {source}
     """).df()
-
-    # Build expressions for null/non-null counts
-    columns = schema["column_name"].tolist()
-
-    count_expressions = []
-
-    for column in columns:
-        safe_column = '"' + column.replace('"', '""') + '"'
-
-        count_expressions.append(
-            f'COUNT({safe_column}) AS "{column}"'
-        )
-
-    count_query = f"""
-        SELECT
-            COUNT(*) AS row_count,
-            {", ".join(count_expressions)}
-        FROM read_csv_auto('{path}')
-    """
-
-    counts = con.execute(count_query).fetchone()
-
-    row_count = counts[0]
-
-    non_null_counts = dict(
-        zip(columns, counts[1:])
-    )
-
-    info = schema[["column_name", "column_type"]].copy()
-
-    info.rename(
-        columns={
-            "column_name": "Column",
-            "column_type": "Dtype"
-        },
-        inplace=True
-    )
-
-    info["Non-Null Count"] = info["Column"].map(non_null_counts)
-    info["Null Count"] = row_count - info["Non-Null Count"]
-
-    info = info[
-        ["Column", "Non-Null Count", "Null Count", "Dtype"]
-    ]
-
-    return info, row_count
 
 
 def dataset_info(con, path, progress_callback=None):
@@ -79,11 +47,7 @@ def dataset_info(con, path, progress_callback=None):
     if progress_callback:
         progress_callback(0.10, "Reading dataset schema...")
 
-    schema = con.execute(f"""
-        DESCRIBE
-        SELECT *
-        FROM read_csv_auto('{path}')
-    """).df()
+    schema = describe(con,path)
 
     columns = schema["column_name"].tolist()
 
@@ -104,11 +68,12 @@ def dataset_info(con, path, progress_callback=None):
             f'COUNT({safe_column}) AS "{column}"'
         )
 
+    source = get_source(path)
     count_query = f"""
         SELECT
             COUNT(*) AS row_count,
             {", ".join(count_expressions)}
-        FROM read_csv_auto('{path}')
+            FROM {source}
     """
 
     counts = con.execute(count_query).fetchone()
@@ -172,29 +137,17 @@ def duplicate_count(con, path, columns):
         for col in columns
     )
 
+    source = get_source(path)
     result = con.execute(f"""
         SELECT
             COUNT(*) - COUNT(*) OVER () AS duplicate_count
         FROM (
             SELECT DISTINCT {column_list}
-            FROM read_csv_auto('{path}')
+            FROM {source}
         )
     """).fetchone()
 
     return result[0]
 
 
-#dead functions since not uploading datasets anymore
-# def save(uploaded_file):
-#     upload_dir = "data/uploads"
-#     os.makedirs(upload_dir, exist_ok=True)
 
-#     file_path = os.path.join(
-#         upload_dir,
-#         uploaded_file.name
-#     )
-
-#     with open(file_path, "wb") as f:
-#         f.write(uploaded_file.getbuffer())
-
-#     return file_path

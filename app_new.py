@@ -204,39 +204,37 @@ with left_col:
                 # PANDAS COLUMN SELECTION
                 # -----------------------------------
                 df = get_dataframe()
-                if df is not None:
+                columns = df.columns.tolist()
+
+                if module.COLUMN_TYPE == "numeric":
+                    columns = df.select_dtypes(
+                        include="number"
+                    ).columns.tolist()
+
+                elif module.COLUMN_TYPE == "categorical":
+                    columns = df.select_dtypes(
+                        exclude="number"
+                    ).columns.tolist()
+
+                else:
                     columns = df.columns.tolist()
-
-                    if module.COLUMN_TYPE == "numeric":
-                        columns = df.select_dtypes(
-                            include="number"
-                        ).columns.tolist()
-
-                    elif module.COLUMN_TYPE == "categorical":
-                        columns = df.select_dtypes(
-                            exclude="number"
-                        ).columns.tolist()
-
-                    else:
-                        columns = df.columns.tolist()
 
 
             # -----------------------------------
             # MULTISELECT
             # -----------------------------------
+            
+            if module.ALLOW_MULTISELECT:
 
-            if df is not None:
-                if module.ALLOW_MULTISELECT:
+                selected_columns = st.multiselect(
+                    "Columns",
+                    columns,
+                    key=f"{module.TITLE}_columns"
+                )
 
-                    selected_columns = st.multiselect(
-                        "Columns",
-                        columns,
-                        key=f"{module.TITLE}_columns"
-                    )
+            else:
 
-                else:
-
-                    selected_columns = []
+                selected_columns = []
 
 
             # -----------------------------------

@@ -1,7 +1,7 @@
 
 def get_engine(file_size):
 
-    if file_size <= 500 * 1024 * 1024:
+    if file_size <= 20 * 1024 * 1024:
         return "pandas"
 
     return "duckdb"

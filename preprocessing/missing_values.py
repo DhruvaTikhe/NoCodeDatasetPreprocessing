@@ -25,7 +25,11 @@ def process(df: pd.DataFrame, columns, method, constant_value=None):
     if method == "Mean":
 
         for col in columns:
-            df[col] = df[col].fillna(df[col].mean())
+            mean = df[col].mean()
+            if type(mean) == type(df[col]):
+                df[col] = df[col].fillna(df[col].mean())
+            else:
+                return "Wrong Datatype"
 
     elif method == "Median":
 
@@ -40,7 +44,23 @@ def process(df: pd.DataFrame, columns, method, constant_value=None):
     elif method == "Constant (supports Text)":
 
         for col in columns:
-            df[col] = df[col].fillna(constant_value)
+            value = constant_value
+
+            # Convert constant according to column dtype
+            if pd.api.types.is_numeric_dtype(df[col]):
+                value = pd.to_numeric(value, errors="raise")
+
+                # Preserve integer dtype where appropriate
+                if pd.api.types.is_integer_dtype(df[col]):
+                    value = int(value)
+
+                elif pd.api.types.is_float_dtype(df[col]):
+                    value = float(value)
+
+            elif pd.api.types.is_bool_dtype(df[col]):
+                value = str(value).lower() in ["true", "1", "yes"]
+
+            df[col] = df[col].fillna(value)
 
     elif method == "Forward Fill (supports Text)":
 

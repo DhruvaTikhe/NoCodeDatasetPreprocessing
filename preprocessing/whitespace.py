@@ -6,9 +6,9 @@ TITLE = "Whitespace"
 COLUMN_TYPE = "categorical"
 
 METHODS = [
-    "Trim Leading & Trailing",
-    "Remove Extra Spaces",
-    "Remove All Spaces",
+    "Trim Leading & Trailing"
+    # "Remove Extra Spaces",
+    # "Remove All Spaces",
 ]
 
 SHOW_CONSTANT = False
