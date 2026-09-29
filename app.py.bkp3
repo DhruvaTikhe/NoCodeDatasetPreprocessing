@@ -1,6 +1,6 @@
 import streamlit as st
 
-from preprocessing.registry_preprocessing import MODULES as MODULES
+from preprocessing.registry import MODULES as MODULES
 from analysis.registry import ANALYSIS_MODULES as ANALYSIS_MODULES
 
 from utils.loader import *

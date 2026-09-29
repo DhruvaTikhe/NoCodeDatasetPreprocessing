@@ -70,7 +70,6 @@ def dataset_info(con, path):
     return info, row_count
 
 
-
 def dataset_info(con, path, progress_callback=None):
 
     # ---------------------------------------------------------
@@ -164,7 +163,6 @@ def dataset_info(con, path, progress_callback=None):
         progress_callback(1.0, "Dataset information ready.")
 
     return info_data, row_count, missing_count
-
 
 
 def duplicate_count(con, path, columns):

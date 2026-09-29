@@ -1,20 +1,24 @@
+#basic requirements
 import streamlit as st
+import matplotlib.pyplot as plt
+import seaborn as sns
+import os
 
-from preprocessing.registry import MODULES as MODULES
-from analysis.registry import ANALYSIS_MODULES as ANALYSIS_MODULES
+#modules
+from preprocessing.registry_preprocessing import MODULES as MODULES
+from preprocessingLarge.registry_large import LARGE_MODULES as LARGE_MODULES
+from analysis.registry_analysis import ANALYSIS_MODULES as ANALYSIS_MODULES
 
+#utilities
 from utils.loader import *
-from utils import loader 
+from utils import loader
 from utils.session import *
 from utils.profiler import *
 from utils.exporter import *
-import matplotlib.pyplot as plt
-import seaborn as sns
 
-#scalability imports
+#scalability utility imports
 from utils import scalable_loader
 from utils import dataset_manager
-import os
 # -----------------------------------------------------------------------------
 # Page Configuration
 # -----------------------------------------------------------------------------
@@ -58,16 +62,20 @@ with left_col:
 
     st.subheader("📂 Dataset Path")
 
-
     dataset_path = st.text_input(
         "Enter the path to your dataset without quotes",
         placeholder=r"only csv file accepted"
     )
 
     if dataset_path:
-        st.write("Path entered:", dataset_path)
-        st.write("Exists:", os.path.exists(dataset_path))
-        st.write("Is file:", os.path.isfile(dataset_path))
+        # st.write("Path entered:", dataset_path)
+        c1,c2,c3 = st.columns(3)
+        with c1:
+            st.write("Exists:", os.path.exists(dataset_path))
+        with c2:
+            st.write("Is file:", os.path.isfile(dataset_path))
+        with c3:
+            st.write("Is CSV:", os.path.isfile(dataset_path) and os.path.splitext(dataset_path)[1].lower() == ".csv")
 
     if st.button("Load Dataset"):
 
@@ -85,12 +93,11 @@ with left_col:
 
             if engine == "pandas":
 
-                df = loader.load_dataset(dataset_path)
+                df = load_dataset(dataset_path)
 
                 st.session_state.df = df
                 st.session_state.dataset_engine = "pandas"
                 st.session_state.dataset_path = dataset_path
-
             else:
 
                 st.session_state.df = None
@@ -147,56 +154,196 @@ with left_col:
     # -------------------------------------------------------------------------
     # Preprocessing Modules
     # -------------------------------------------------------------------------
-    if has_dataframe():
-        df = get_dataframe()
-        for module in MODULES:
-            with st.expander(module.TITLE):
-                columns = df.columns.tolist()
-                if module.COLUMN_TYPE == "numeric":
-                    columns = df.select_dtypes(include="number").columns.tolist()
+    if st.session_state.get("dataset_engine") == "duckdb":
+        active_modules = LARGE_MODULES
+    else:
+        active_modules = MODULES
 
-                elif module.COLUMN_TYPE == "categorical":
-                    columns = df.select_dtypes(exclude="number").columns.tolist()
+    for module in active_modules:
+        with st.expander(module.TITLE):
 
-                else:
+            # -----------------------------------
+            # COLUMN SELECTION
+            # -----------------------------------
+
+            if st.session_state.get("dataset_engine") == "duckdb":
+
+                # Get columns from DuckDB dataset
+                con = scalable_loader.connect()
+
+                try:
+                    schema = scalable_loader.describe(
+                        con,
+                        st.session_state.dataset_path
+                    )
+
+                    columns = schema["column_name"].tolist()
+
+                    # Filter columns based on module.COLUMN_TYPE
+                    if module.COLUMN_TYPE == "numeric":
+                        columns = schema[
+                            schema["column_type"].str.lower().isin(
+                                ["integer", "bigint", "double", "float", "decimal",
+                                "smallint", "tinyint", "hugeint"]
+                            )
+                        ]["column_name"].tolist()
+
+                    elif module.COLUMN_TYPE == "categorical":
+                        columns = schema[
+                            schema["column_type"].str.lower().isin(
+                                ["varchar", "text", "string"]
+                            )
+                        ]["column_name"].tolist()
+
+                finally:
+                    con.close()
+
+            else:
+
+                # -----------------------------------
+                # PANDAS COLUMN SELECTION
+                # -----------------------------------
+                df = get_dataframe()
+                if df is not None:
                     columns = df.columns.tolist()
-                # st.markdown(module.METHODS) #debug
-                # st.markdown(columns) #debug
 
+                    if module.COLUMN_TYPE == "numeric":
+                        columns = df.select_dtypes(
+                            include="number"
+                        ).columns.tolist()
+
+                    elif module.COLUMN_TYPE == "categorical":
+                        columns = df.select_dtypes(
+                            exclude="number"
+                        ).columns.tolist()
+
+                    else:
+                        columns = df.columns.tolist()
+
+
+            # -----------------------------------
+            # MULTISELECT
+            # -----------------------------------
+
+            if df is not None:
                 if module.ALLOW_MULTISELECT:
+
                     selected_columns = st.multiselect(
                         "Columns",
                         columns,
                         key=f"{module.TITLE}_columns"
                     )
 
-                method = st.selectbox(
-                    "Methods",
-                    module.METHODS,
-                    key=f"{module.TITLE}_methods"
+                else:
+
+                    selected_columns = []
+
+
+            # -----------------------------------
+            # METHOD
+            # -----------------------------------
+
+            method = st.selectbox(
+                "Methods",
+                module.METHODS,
+                key=f"{module.TITLE}_methods"
+            )
+
+
+            # -----------------------------------
+            # CONSTANT VALUE
+            # -----------------------------------
+
+            constant = None
+
+            if module.SHOW_CONSTANT:
+
+                constant = st.text_input(
+                    "Constant Value",
+                    key=f"{module.TITLE}_constant"
                 )
 
-                constant = None
-                if module.SHOW_CONSTANT:
-                    constant = st.text_input(
-                        "Constant Value",
-                        key=f"{module.TITLE}_constant"
+
+            if st.button("Apply", key=f"apply_{module.TITLE}"):
+                if st.session_state.get("dataset_engine") == "duckdb":
+
+                    new_path, log = module.processLargeDataset(
+                        st.session_state.dataset_path,
+                        selected_columns,
+                        method,
+                        constant
                     )
 
-                if st.button("Apply", key=f"{module.TITLE}_apply"):
+                    st.session_state.dataset_path = new_path
+
+                else:
 
                     new_df, log = module.process(
                         get_dataframe(),
                         selected_columns,
                         method,
-                        constant_value=constant,
+                        constant_value=constant
                     )
 
                     set_dataframe(new_df)
 
-                    st.session_state.logs.append(log)
+                st.session_state.logs.append(log)
 
-                    st.rerun()
+                st.rerun()
+
+
+
+    # OLD MODULES DO NOT TOUCH!!
+    # if has_dataframe():
+    #     df = get_dataframe()
+    #     for module in MODULES:
+    #         with st.expander(module.TITLE):
+    #             columns = df.columns.tolist()
+    #             if module.COLUMN_TYPE == "numeric":
+    #                 columns = df.select_dtypes(include="number").columns.tolist()
+
+    #             elif module.COLUMN_TYPE == "categorical":
+    #                 columns = df.select_dtypes(exclude="number").columns.tolist()
+
+    #             else:
+    #                 columns = df.columns.tolist()
+    #             # st.markdown(module.METHODS) #debug
+    #             # st.markdown(columns) #debug
+
+    #             if module.ALLOW_MULTISELECT:
+    #                 selected_columns = st.multiselect(
+    #                     "Columns",
+    #                     columns,
+    #                     key=f"{module.TITLE}_columns"
+    #                 )
+
+    #             method = st.selectbox(
+    #                 "Methods",
+    #                 module.METHODS,
+    #                 key=f"{module.TITLE}_methods"
+    #             )
+
+    #             constant = None
+    #             if module.SHOW_CONSTANT:
+    #                 constant = st.text_input(
+    #                     "Constant Value",
+    #                     key=f"{module.TITLE}_constant"
+    #                 )
+
+    #             if st.button("Apply", key=f"{module.TITLE}_apply"):
+
+    #                 new_df, log = module.process(
+    #                     get_dataframe(),
+    #                     selected_columns,
+    #                     method,
+    #                     constant_value=constant,
+    #                 )
+
+    #                 set_dataframe(new_df)
+
+    #                 st.session_state.logs.append(log)
+
+    #                 st.rerun()
 # =============================================================================
 # RIGHT PANEL
 # =============================================================================
@@ -641,15 +788,18 @@ st.divider()
 
 if has_dataframe():
 
-    # df = get_dataframe() #OLD
     df = st.session_state.df
+
     st.write(get_dataframe().head(10))
+
     csv_bytes = to_csv_bytes(df)
     excel_bytes = to_excel_bytes(df)
 
-    filename = st.session_state.uploaded_filename
+    filename = os.path.basename(
+        st.session_state.dataset_path
+    )
 
-    col1, col2, col3= st.columns([1,1,8])
+    col1, col2, col3 = st.columns([1, 1, 8])
 
     with col1:
         st.download_button(
@@ -657,7 +807,7 @@ if has_dataframe():
             data=csv_bytes,
             file_name=generate_filename(filename, "csv"),
             mime="text/csv",
-            width='stretch',
+            width="stretch",
         )
 
     with col2:
@@ -666,7 +816,10 @@ if has_dataframe():
             data=excel_bytes,
             file_name=generate_filename(filename, "xlsx"),
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            width='stretch',
+            width="stretch",
         )
     with col3:
         st.progress(0)
+
+
+# E:\College_Backup\BTech_Internship\Persistent_Project\Dataset-Pipeline\NoCodeDatasetPreprocessing_LearningDuckDB\learningDuckDB\archive\diabetes.csv
