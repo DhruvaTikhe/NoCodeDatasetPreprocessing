@@ -9,7 +9,7 @@ COLUMN_TYPE = "all"
 METHODS = [
     "Mean",
     "Median",
-    "Mode (supports Text)",
+    # "Mode (supports Text)",
     "Constant (supports Text)",
     "Forward Fill (supports Text)",
     "Backward Fill (supports Text)",
