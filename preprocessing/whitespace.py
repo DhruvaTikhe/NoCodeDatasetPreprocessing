@@ -36,8 +36,9 @@ def process(df, columns, method, **kwargs):
 
         original = df.loc[mask, column].astype(str)
 
-        if method == "Trim Leading & Trailing":
+        if method in {"Trim", "Trim Leading & Trailing"}:
 
+            # "Trim" is retained as a compatibility alias for older callers.
             cleaned = original.str.strip()
 
         elif method == "Remove Extra Spaces":
